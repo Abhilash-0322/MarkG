@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gojo Satoru - Motion Capture Technique Activation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loading-content">
+            <div class="loading-ring">
+                <div class="infinity-symbol">∞</div>
+            </div>
+            <h1>JUJUTSU KAISEN</h1>
+            <p class="loading-text">Initializing Cursed Energy...</p>
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div id="app-container">
+        <!-- Header -->
+        <header id="header">
+            <div class="logo">
+                <span class="logo-text">五条悟</span>
+                <span class="logo-subtitle">GOJO SATORU</span>
+            </div>
+            <div class="status-bar">
+                <div class="cursed-energy-meter">
+                    <span class="meter-label">CURSED ENERGY</span>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="energy-meter"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Three.js Canvas Container -->
+        <div id="three-container">
+            <canvas id="gojo-canvas"></canvas>
+            
+            <!-- Technique Activation Overlay -->
+            <div id="technique-overlay" class="hidden">
+                <div class="technique-name" id="technique-name"></div>
+                <div class="technique-kanji" id="technique-kanji"></div>
+            </div>
+
+            <!-- Domain Expansion Overlay -->
+            <div id="domain-overlay" class="hidden">
+                <div class="domain-text">
+                    <span class="domain-kanji">無量空処</span>
+                    <span class="domain-romaji">MURYŌKŪSHO</span>
+                    <span class="domain-english">INFINITE VOID</span>
+                </div>
+            </div>
+
+            <!-- Hollow Purple Overlay -->
+            <div id="hollow-purple-overlay" class="hidden">
+                <div class="purple-orb"></div>
+                <div class="purple-text">虚式「茈」</div>
+            </div>
+        </div>
+
+        <!-- Camera Container -->
+        <div id="camera-container">
+            <video id="camera-feed" autoplay playsinline></video>
+            <canvas id="pose-canvas"></canvas>
+            <div class="camera-frame"></div>
+            <div class="gesture-indicator" id="gesture-indicator">
+                <span class="gesture-text">DETECTING...</span>
+            </div>
+        </div>
+
+        <!-- Technique Cards -->
+        <div id="technique-cards">
+            <div class="technique-card" data-technique="infinity">
+                <div class="card-glow"></div>
+                <div class="card-content">
+                    <div class="card-icon">∞</div>
+                    <div class="card-name">INFINITY</div>
+                    <div class="card-gesture">🙌 Both hands up</div>
+                </div>
+            </div>
+            <div class="technique-card" data-technique="blue">
+                <div class="card-glow blue"></div>
+                <div class="card-content">
+                    <div class="card-icon">蒼</div>
+                    <div class="card-name">CURSED BLUE</div>
+                    <div class="card-gesture">👈 Left hand forward</div>
+                </div>
+            </div>
+            <div class="technique-card" data-technique="red">
+                <div class="card-glow red"></div>
+                <div class="card-content">
+                    <div class="card-icon">赫</div>
+                    <div class="card-name">CURSED RED</div>
+                    <div class="card-gesture">👉 Right hand forward</div>
+                </div>
+            </div>
+            <div class="technique-card" data-technique="purple">
+                <div class="card-glow purple"></div>
+                <div class="card-content">
+                    <div class="card-icon">茈</div>
+                    <div class="card-name">HOLLOW PURPLE</div>
+                    <div class="card-gesture">🙏 Hands together</div>
+                </div>
+            </div>
+            <div class="technique-card" data-technique="domain">
+                <div class="card-glow domain"></div>
+                <div class="card-content">
+                    <div class="card-icon">領</div>
+                    <div class="card-name">DOMAIN EXPANSION</div>
+                    <div class="card-gesture">🤲 Both hands out wide</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div id="control-panel">
+            <button id="start-camera" class="control-btn">
+                <span class="btn-icon">📷</span>
+                <span class="btn-text">START CAMERA</span>
+            </button>
+            <button id="toggle-blindfold" class="control-btn">
+                <span class="btn-icon">👁️</span>
+                <span class="btn-text">REMOVE BLINDFOLD</span>
+            </button>
+        </div>
+
+        <!-- Info Panel -->
+        <div id="info-panel">
+            <div class="info-item">
+                <span class="info-label">SHORTCUTS:</span>
+                <span class="info-value">1-5: Techniques | B: Blindfold | A: Auto-Cast | R: Random</span>
+            </div>
+        </div>
+
+        <!-- Particle Effect Container -->
+        <div id="particle-container"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
