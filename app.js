@@ -138,7 +138,70 @@ function initLoadingScreen() {
     setTimeout(() => {
         document.getElementById('loading-screen').classList.add('hidden');
         initApp();
+        
+        // Show quick start guide after loading
+        setTimeout(() => {
+            showQuickStartGuide();
+        }, 500);
     }, 2500);
+}
+
+function showQuickStartGuide() {
+    const guide = document.createElement('div');
+    guide.id = 'quick-start-guide';
+    guide.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%);
+        padding: 40px;
+        border-radius: 20px;
+        border: 2px solid #00d4ff;
+        max-width: 500px;
+        color: #fff;
+        font-family: 'Rajdhani', sans-serif;
+        box-shadow: 0 0 50px rgba(0, 212, 255, 0.5);
+        z-index: 9998;
+        animation: slideIn 0.5s ease-out;
+    `;
+    
+    guide.innerHTML = `
+        <h2 style="color: #00d4ff; font-family: 'Orbitron', sans-serif; margin-bottom: 20px; text-align: center;">⚡ WELCOME SORCERER!</h2>
+        <div style="line-height: 2; color: #ccc;">
+            <p style="margin-bottom: 15px;"><strong style="color: #00d4ff;">🎮 Get Started:</strong></p>
+            <p>• Press <strong>1-5</strong> to activate techniques</p>
+            <p>• Press <strong>A</strong> for Auto-Cast Mode</p>
+            <p>• Press <strong>R</strong> for Random Technique</p>
+            <p>• Press <strong>B</strong> to remove blindfold</p>
+            <p style="margin-top: 20px; margin-bottom: 15px;"><strong style="color: #00d4ff;">📷 Camera Control:</strong></p>
+            <p>• Click <strong>"START CAMERA"</strong> for motion capture</p>
+            <p>• Allow camera when browser asks</p>
+            <p>• If blocked, click <strong>"HELP"</strong> button</p>
+        </div>
+        <button id="start-guide-btn" style="
+            width: 100%;
+            margin-top: 30px;
+            padding: 15px;
+            background: #00d4ff;
+            border: none;
+            border-radius: 25px;
+            color: #000;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        ">LET'S GO! ⚡</button>
+    `;
+    
+    document.body.appendChild(guide);
+    
+    document.getElementById('start-guide-btn').addEventListener('click', () => {
+        guide.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => guide.remove(), 300);
+    });
 }
 
 function initApp() {
@@ -487,6 +550,11 @@ function initEventListeners() {
     // Toggle Blindfold Button
     document.getElementById('toggle-blindfold').addEventListener('click', toggleBlindfold);
 
+    // Camera Help Button
+    document.getElementById('camera-help').addEventListener('click', () => {
+        showCameraHelpModal();
+    });
+
     // Technique Cards
     document.querySelectorAll('.technique-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -566,6 +634,39 @@ function randomTechnique() {
 // CAMERA & MOTION DETECTION
 // =====================================================
 
+function showCameraHelpModal() {
+    const helpText = `🎥 CAMERA SETUP GUIDE\n\n` +
+        `METHOD 1 - Quick Fix (Recommended):\n` +
+        `1. Look at the address bar (where it says localhost:8080)\n` +
+        `2. Click the 🔒 lock icon or 🎥 camera icon\n` +
+        `3. Find "Camera" and select "Allow"\n` +
+        `4. Click "START CAMERA" button again\n\n` +
+        `METHOD 2 - Chrome Settings:\n` +
+        `1. Copy this: chrome://settings/content/camera\n` +
+        `2. Paste it in a new tab and press Enter\n` +
+        `3. Under "Allowed to use your camera"\n` +
+        `4. Click "Add" and enter: http://localhost:8080\n` +
+        `5. Refresh this page (F5)\n\n` +
+        `METHOD 3 - Reset Permissions:\n` +
+        `1. Go to: chrome://settings/content/siteDetails?site=http%3A%2F%2Flocalhost%3A8080\n` +
+        `2. Find "Camera" permission\n` +
+        `3. Set it to "Allow"\n` +
+        `4. Refresh the page\n\n` +
+        `STILL NOT WORKING?\n` +
+        `• Make sure your camera is connected\n` +
+        `• Close other apps using the camera (Zoom, Teams, etc.)\n` +
+        `• Try a different browser (Firefox, Edge)\n` +
+        `• Restart your browser\n\n` +
+        `NO CAMERA? NO PROBLEM!\n` +
+        `You can still enjoy the app!\n` +
+        `• Click technique cards on the left\n` +
+        `• Use keyboard shortcuts: 1-5\n` +
+        `• Press 'A' for Auto-Cast Mode\n` +
+        `• Press 'R' for Random Technique`;
+    
+    showCameraErrorModal(helpText);
+}
+
 async function toggleCamera() {
     const btn = document.getElementById('start-camera');
     const video = document.getElementById('camera-feed');
@@ -579,20 +680,127 @@ async function toggleCamera() {
         return;
     }
 
+    // Check if getUserMedia is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        showCameraErrorModal('Your browser does not support camera access. Please use Chrome, Edge, or Firefox.');
+        return;
+    }
+
     try {
+        btn.querySelector('.btn-text').textContent = 'REQUESTING...';
+        btn.disabled = true;
+        
         state.cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 }
+            video: { 
+                width: { ideal: 640 },
+                height: { ideal: 480 },
+                facingMode: 'user'
+            }
         });
+        
         video.srcObject = state.cameraStream;
         btn.querySelector('.btn-text').textContent = 'STOP CAMERA';
         btn.classList.add('active');
+        btn.disabled = false;
+        
+        updateGestureIndicator('CAMERA ACTIVE');
 
         // Initialize MediaPipe Hands
-        initHandTracking();
+        setTimeout(() => initHandTracking(), 500);
+        
     } catch (error) {
-        console.error('Camera access denied:', error);
-        alert('Camera access is required for motion detection.');
+        console.error('Camera access error:', error);
+        btn.querySelector('.btn-text').textContent = 'START CAMERA';
+        btn.disabled = false;
+        
+        let errorMessage = 'Camera access denied. ';
+        
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            errorMessage += 'You blocked camera access.\n\n';
+            errorMessage += '🔧 TO FIX IN CHROME:\n';
+            errorMessage += '1. Click the 🔒 or 🎥 icon in the address bar\n';
+            errorMessage += '2. Change Camera permission to "Allow"\n';
+            errorMessage += '3. Refresh the page (F5)\n\n';
+            errorMessage += 'OR:\n';
+            errorMessage += '1. Go to chrome://settings/content/camera\n';
+            errorMessage += '2. Add http://localhost:8080 to "Allowed to use your camera"\n';
+            errorMessage += '3. Refresh the page';
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            errorMessage += 'No camera found. Please connect a camera and try again.';
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+            errorMessage += 'Camera is already in use by another application. Close other apps using the camera and try again.';
+        } else {
+            errorMessage += error.message || 'Unknown error occurred.';
+        }
+        
+        showCameraErrorModal(errorMessage);
+        updateGestureIndicator('CAMERA ERROR');
     }
+}
+
+function showCameraErrorModal(message) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('camera-error-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'camera-error-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        
+        const content = document.createElement('div');
+        content.style.cssText = `
+            background: linear-gradient(135deg, #1a1a2e 0%, #0a0a0a 100%);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #00d4ff;
+            max-width: 600px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.5);
+        `;
+        
+        content.innerHTML = `
+            <h2 style="color: #00d4ff; font-family: 'Orbitron', sans-serif; margin-bottom: 20px; font-size: 1.8rem;">⚠️ CAMERA ACCESS BLOCKED</h2>
+            <pre id="error-message" style="white-space: pre-wrap; line-height: 1.8; color: #ccc; font-family: 'Rajdhani', sans-serif; font-size: 1rem;"></pre>
+            <button id="close-modal-btn" style="
+                margin-top: 30px;
+                padding: 15px 40px;
+                background: #00d4ff;
+                border: none;
+                border-radius: 25px;
+                color: #000;
+                font-family: 'Rajdhani', sans-serif;
+                font-size: 1rem;
+                font-weight: 700;
+                letter-spacing: 2px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            ">GOT IT</button>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 212, 255, 0.1); border-radius: 10px; border-left: 3px solid #00d4ff;">
+                <strong style="color: #00d4ff;">💡 TIP:</strong> You can still use the app! Click technique cards or use keyboard shortcuts (1-5) to activate techniques without camera.
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+    
+    document.getElementById('error-message').textContent = message;
+    modal.style.display = 'flex';
 }
 
 function initHandTracking() {

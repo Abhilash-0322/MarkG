@@ -653,6 +653,40 @@ body {
     }
 }
 
+/* Quick Start Guide Animations */
+@keyframes slideIn {
+    from {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+    }
+}
+
+/* Help Button Styling */
+.help-btn {
+    background: rgba(139, 92, 246, 0.2) !important;
+    border-color: #8b5cf6 !important;
+}
+
+.help-btn:hover {
+    background: #8b5cf6 !important;
+    box-shadow: 0 0 30px #8b5cf6 !important;
+}
+
 /* Particle Container */
 #particle-container {
     position: fixed;

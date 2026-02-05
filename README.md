@@ -58,8 +58,16 @@ An interactive web app featuring Gojo Satoru from Jujutsu Kaisen with real-time 
 
 3. **Enable Camera:**
    - Click "START CAMERA" button
-   - Allow camera permissions when prompted
-   - Perform gestures to activate techniques!
+   - **Allow camera permissions** when browser asks
+   - If Chrome blocks it, click the **🔒 lock icon** in the address bar
+   - Change Camera to "Allow"
+   - Refresh page (F5)
+   - **OR** click the purple "HELP" button for detailed instructions
+
+   **⚠️ Camera blocked?** See [CAMERA_FIX.md](CAMERA_FIX.md) for detailed solutions!
+
+4. **Start using techniques!**
+   - Perform gestures or use keyboard shortcuts (1-5)
 
 ## 🔧 Camera Fixes Applied
 
