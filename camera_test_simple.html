@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Camera Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        video {
+            width: 100%;
+            max-width: 640px;
+            border: 3px solid #00ffff;
+            border-radius: 10px;
+            transform: scaleX(-1);
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background: #00ffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 20px 0;
+        }
+        button:hover {
+            background: #00cccc;
+        }
+        #status {
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>📷 Simple Camera Test</h1>
+        <p>This is a minimal test to verify camera access works.</p>
+        
+        <button id="startBtn">START CAMERA</button>
+        <button id="stopBtn" style="display: none;">STOP CAMERA</button>
+        
+        <div id="status">
+            <div class="info">Status: Ready to start</div>
+        </div>
+        
+        <video id="video" autoplay playsinline muted></video>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        let stream = null;
+
+        function logStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            status.appendChild(div);
+            status.scrollTop = status.scrollHeight;
+            console.log(message);
+        }
+
+        startBtn.addEventListener('click', async () => {
+            try {
+                logStatus('Requesting camera access...', 'info');
+                
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    logStatus('ERROR: getUserMedia not supported', 'error');
+                    return;
+                }
+
+                logStatus('Browser supports getUserMedia ✅', 'success');
+                
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+
+                logStatus('Camera stream obtained ✅', 'success');
+                
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    logStatus('Video metadata loaded ✅', 'success');
+                    logStatus(`Video size: ${video.videoWidth} x ${video.videoHeight}`, 'info');
+                };
+
+                await video.play();
+                logStatus('Video playing ✅', 'success');
+                
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+
+            } catch (error) {
+                logStatus(`ERROR: ${error.name} - ${error.message}`, 'error');
+                
+                if (error.name === 'NotAllowedError') {
+                    logStatus('Camera permission denied. Click the 🔒 icon in address bar to allow.', 'error');
+                } else if (error.name === 'NotFoundError') {
+                    logStatus('No camera found on this device.', 'error');
+                } else if (error.name === 'NotReadableError') {
+                    logStatus('Camera is already in use by another application.', 'error');
+                }
+            }
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+                stream = null;
+                logStatus('Camera stopped', 'info');
+                
+                startBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+            }
+        });
+
+        // Log browser info on load
+        window.addEventListener('load', () => {
+            logStatus('=== BROWSER INFO ===', 'info');
+            logStatus(`URL: ${window.location.href}`, 'info');
+            logStatus(`Protocol: ${window.location.protocol}`, 'info');
+            logStatus(`User Agent: ${navigator.userAgent.substring(0, 60)}...`, 'info');
+            logStatus(`MediaDevices: ${!!navigator.mediaDevices ? '✅' : '❌'}`, 
+                !!navigator.mediaDevices ? 'success' : 'error');
+            logStatus(`getUserMedia: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '✅' : '❌'}`,
+                !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? 'success' : 'error');
+        });
+    </script>
+</body>
+</html>

@@ -46,6 +46,8 @@ An interactive web app featuring Gojo Satoru from Jujutsu Kaisen with real-time 
 
 ## 🚀 Getting Started
 
+### Local Development
+
 1. **Start the server:**
    ```bash
    python3 -m http.server 8080
@@ -56,18 +58,45 @@ An interactive web app featuring Gojo Satoru from Jujutsu Kaisen with real-time 
    http://localhost:8080
    ```
 
-3. **Enable Camera:**
-   - Click "START CAMERA" button
-   - **Allow camera permissions** when browser asks
-   - If Chrome blocks it, click the **🔒 lock icon** in the address bar
-   - Change Camera to "Allow"
-   - Refresh page (F5)
-   - **OR** click the purple "HELP" button for detailed instructions
+### GitHub Pages Deployment
 
-   **⚠️ Camera blocked?** See [CAMERA_FIX.md](CAMERA_FIX.md) for detailed solutions!
+1. **Push to GitHub:**
+   ```bash
+   git add .
+   git commit -m "Deploy Gojo app"
+   git push origin main
+   ```
 
-4. **Start using techniques!**
-   - Perform gestures or use keyboard shortcuts (1-5)
+2. **Enable GitHub Pages:**
+   - Go to repository Settings
+   - Scroll to "Pages"
+   - Source: Deploy from branch "main"
+   - Folder: / (root)
+   - Save
+
+3. **Access your site:**
+   ```
+   https://yourusername.github.io/repository-name/
+   ```
+
+### 📷 Camera Setup
+
+**For GitHub Pages:**
+- Click "START CAMERA" button
+- **Allow camera** when browser prompts
+- If blocked: Click the **🔒 padlock icon** in address bar
+- Change Camera to "Allow"
+- Refresh page (F5)
+
+**⚠️ Camera still blocked?** 
+- See [GITHUB_PAGES_CAMERA_FIX.md](GITHUB_PAGES_CAMERA_FIX.md) for complete guide
+- Or click the purple **"HELP"** button in the app
+- Works on Chrome, Edge, Firefox, Safari with proper permissions
+
+**💡 No camera? No problem!**
+- Use keyboard shortcuts (1-5)
+- Click technique cards
+- Press 'A' for Auto-Cast Mode
 
 ## 🔧 Camera Fixes Applied
 

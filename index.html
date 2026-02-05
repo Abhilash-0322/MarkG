@@ -24,6 +24,9 @@
 
     <!-- Main Container -->
     <div id="app-container">
+        <!-- GitHub Pages Notice -->
+        <div id="github-pages-notice" style="display: none;"></div>
+        
         <!-- Header -->
         <header id="header">
             <div class="logo">
@@ -68,7 +71,7 @@
 
         <!-- Camera Container -->
         <div id="camera-container">
-            <video id="camera-feed" autoplay playsinline></video>
+            <video id="camera-feed" autoplay playsinline muted></video>
             <canvas id="pose-canvas"></canvas>
             <div class="camera-frame"></div>
             <div class="gesture-indicator" id="gesture-indicator">
@@ -149,12 +152,33 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    <script type="module" src="app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3/drawing_utils.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" crossorigin="anonymous"></script>
+    
+    <!-- Script Loading Verification -->
+    <script>
+        // Verify scripts loaded
+        window.addEventListener('load', () => {
+            console.log('=== SCRIPT LOADING STATUS ===');
+            console.log('THREE.js:', typeof THREE !== 'undefined' ? '✅' : '❌');
+            console.log('MediaPipe Hands:', typeof Hands !== 'undefined' ? '✅' : '❌');
+            console.log('MediaPipe Camera:', typeof Camera !== 'undefined' ? '✅' : '❌');
+            console.log('MediaPipe Drawing:', typeof drawConnectors !== 'undefined' ? '✅' : '❌');
+            console.log('GSAP:', typeof gsap !== 'undefined' ? '✅' : '❌');
+            console.log('Anime.js:', typeof anime !== 'undefined' ? '✅' : '❌');
+            console.log('============================');
+            
+            if (typeof Hands === 'undefined') {
+                console.warn('⚠️ MediaPipe Hands failed to load. Gesture detection will be disabled.');
+                console.log('💡 Camera will still work for viewing, but no hand tracking.');
+            }
+        });
+    </script>
+    
+    <script src="app.js"></script>
 </body>
 </html>

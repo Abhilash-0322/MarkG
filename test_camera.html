@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Test - Gojo App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+        h1 { color: #00d4ff; }
+        button {
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #00a8cc; }
+        #video { 
+            width: 100%; 
+            max-width: 640px; 
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #064; color: #0f0; }
+        .error { background: #640; color: #f00; }
+        .info { background: #046; color: #0ff; }
+        pre {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 Camera Test - Gojo App Diagnostics</h1>
+    
+    <div class="info status">
+        <strong>ℹ️ Purpose:</strong> Test if your camera works before using the main app
+    </div>
+
+    <h2>System Information</h2>
+    <pre id="sysinfo">Loading...</pre>
+
+    <h2>Camera Test</h2>
+    <button onclick="testCamera()">Test Camera</button>
+    <button onclick="stopCamera()">Stop Camera</button>
+    
+    <div id="status"></div>
+    <video id="video" autoplay playsinline style="display:none"></video>
+
+    <h2>What to do:</h2>
+    <ol>
+        <li>Click "Test Camera" button above</li>
+        <li>Allow camera access when prompted</li>
+        <li>If you see yourself, camera works! ✅</li>
+        <li>If not, check the error message below</li>
+    </ol>
+
+    <h2>Common Issues:</h2>
+    <ul>
+        <li><strong>Permission denied:</strong> Click 🔒 padlock in address bar, allow camera</li>
+        <li><strong>No camera found:</strong> Connect a camera or check device settings</li>
+        <li><strong>Already in use:</strong> Close Zoom, Teams, Skype, etc.</li>
+    </ul>
+
+    <div style="margin-top: 30px; padding: 15px; background: #1a1a1a; border-radius: 5px;">
+        <strong>✅ Camera working?</strong> Go back to the main app: <a href="index.html" style="color: #00d4ff;">index.html</a>
+    </div>
+
+    <script>
+        let stream = null;
+
+        // Display system info
+        document.getElementById('sysinfo').textContent = 
+            `URL: ${window.location.href}\n` +
+            `Protocol: ${window.location.protocol}\n` +
+            `User Agent: ${navigator.userAgent}\n` +
+            `MediaDevices: ${!!navigator.mediaDevices}\n` +
+            `getUserMedia: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)}`;
+
+        async function testCamera() {
+            const video = document.getElementById('video');
+            const status = document.getElementById('status');
+            
+            status.innerHTML = '<div class="info status">📡 Requesting camera access...</div>';
+            
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480 }
+                });
+                
+                video.srcObject = stream;
+                video.style.display = 'block';
+                
+                status.innerHTML = '<div class="success status">✅ Camera working! You should see yourself above.</div>';
+                
+                console.log('Camera stream:', stream);
+                console.log('Video tracks:', stream.getVideoTracks());
+                
+            } catch (error) {
+                console.error('Camera error:', error);
+                
+                let errorMsg = `<div class="error status">❌ Error: ${error.name}<br>`;
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMsg += '<strong>Fix:</strong> Click the 🔒 icon in address bar → Allow camera → Refresh</div>';
+                } else if (error.name === 'NotFoundError') {
+                    errorMsg += '<strong>Fix:</strong> Connect a camera and try again</div>';
+                } else if (error.name === 'NotReadableError') {
+                    errorMsg += '<strong>Fix:</strong> Close other apps using camera (Zoom, Teams, etc.)</div>';
+                } else {
+                    errorMsg += `<strong>Message:</strong> ${error.message}</div>`;
+                }
+                
+                status.innerHTML = errorMsg;
+                video.style.display = 'none';
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                document.getElementById('video').style.display = 'none';
+                document.getElementById('status').innerHTML = '<div class="info status">📷 Camera stopped</div>';
+            }
+        }
+    </script>
+</body>
+</html>

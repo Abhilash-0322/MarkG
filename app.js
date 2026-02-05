@@ -205,10 +205,73 @@ function showQuickStartGuide() {
 }
 
 function initApp() {
+    // Log diagnostic info
+    console.log('=== GOJO APP INITIALIZATION ===');
+    console.log('Location:', window.location.href);
+    console.log('Protocol:', window.location.protocol);
+    console.log('User Agent:', navigator.userAgent);
+    console.log('MediaDevices available:', !!navigator.mediaDevices);
+    console.log('getUserMedia available:', !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+    console.log('MediaPipe Hands available:', typeof Hands !== 'undefined');
+    console.log('GSAP available:', typeof gsap !== 'undefined');
+    console.log('Anime.js available:', typeof anime !== 'undefined');
+    console.log('===============================');
+    
+    // Show GitHub Pages notice if applicable
+    if (window.location.href.includes('github.io')) {
+        showGitHubPagesNotice();
+    }
+    
     initThreeJS();
     initEventListeners();
     initParticleSystem();
     animate();
+}
+
+function showGitHubPagesNotice() {
+    const notice = document.getElementById('github-pages-notice');
+    if (!notice) return;
+    
+    notice.style.cssText = `
+        position: fixed;
+        top: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.9), rgba(109, 40, 217, 0.9));
+        padding: 12px 25px;
+        border-radius: 25px;
+        border: 2px solid #a78bfa;
+        color: #fff;
+        font-family: 'Rajdhani', sans-serif;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        z-index: 200;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDown 0.5s ease-out;
+        cursor: pointer;
+    `;
+    
+    notice.innerHTML = `
+        <span style="font-size: 1.2rem;">🌐</span>
+        <span>GitHub Pages Detected - Click for camera help if needed</span>
+        <span style="font-size: 1rem; margin-left: 5px;">ℹ️</span>
+    `;
+    
+    notice.addEventListener('click', () => {
+        showCameraHelpModal();
+    });
+    
+    // Auto-hide after 8 seconds
+    setTimeout(() => {
+        notice.style.animation = 'slideUp 0.5s ease-out';
+        setTimeout(() => {
+            notice.style.display = 'none';
+        }, 500);
+    }, 8000);
 }
 
 // =====================================================
@@ -297,8 +360,8 @@ function createGojoCharacter() {
     const gojoGroup = new THREE.Group();
     gojoGroup.name = 'gojo';
 
-    // Body
-    const bodyGeometry = new THREE.CapsuleGeometry(0.4, 1.2, 8, 16);
+    // Body (using CylinderGeometry as CapsuleGeometry might not be available)
+    const bodyGeometry = new THREE.CylinderGeometry(0.4, 0.4, 1.2, 16);
     const bodyMaterial = new THREE.MeshStandardMaterial({
         color: 0x1a1a2e,
         roughness: 0.3,
@@ -308,6 +371,17 @@ function createGojoCharacter() {
     body.position.y = 0.8;
     body.castShadow = true;
     gojoGroup.add(body);
+    
+    // Add rounded caps to body
+    const topCapGeometry = new THREE.SphereGeometry(0.4, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2);
+    const topCap = new THREE.Mesh(topCapGeometry, bodyMaterial);
+    topCap.position.y = 1.4;
+    gojoGroup.add(topCap);
+    
+    const bottomCapGeometry = new THREE.SphereGeometry(0.4, 16, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+    const bottomCap = new THREE.Mesh(bottomCapGeometry, bodyMaterial);
+    bottomCap.position.y = 0.2;
+    gojoGroup.add(bottomCap);
 
     // Coat/Uniform
     const coatGeometry = new THREE.CylinderGeometry(0.5, 0.7, 1.4, 8, 1, true);
@@ -545,15 +619,38 @@ function onWindowResize() {
 
 function initEventListeners() {
     // Start Camera Button
-    document.getElementById('start-camera').addEventListener('click', toggleCamera);
+    const cameraBtn = document.getElementById('start-camera');
+    if (cameraBtn) {
+        cameraBtn.addEventListener('click', () => {
+            console.log('📷 Camera button clicked!');
+            toggleCamera();
+        });
+        console.log('✅ Camera button listener attached');
+    } else {
+        console.error('❌ Camera button not found!');
+    }
 
     // Toggle Blindfold Button
-    document.getElementById('toggle-blindfold').addEventListener('click', toggleBlindfold);
+    const blindfoldBtn = document.getElementById('toggle-blindfold');
+    if (blindfoldBtn) {
+        blindfoldBtn.addEventListener('click', toggleBlindfold);
+    }
 
     // Camera Help Button
-    document.getElementById('camera-help').addEventListener('click', () => {
-        showCameraHelpModal();
-    });
+    const helpBtn = document.getElementById('camera-help');
+    if (helpBtn) {
+        helpBtn.addEventListener('click', () => {
+            showCameraHelpModal();
+        });
+    }
+
+    // Debug: Add double-click on header to show diagnostics
+    const header = document.getElementById('header');
+    if (header) {
+        header.addEventListener('dblclick', () => {
+            showDiagnostics();
+        });
+    }
 
     // Technique Cards
     document.querySelectorAll('.technique-card').forEach(card => {
@@ -635,62 +732,123 @@ function randomTechnique() {
 // =====================================================
 
 function showCameraHelpModal() {
-    const helpText = `🎥 CAMERA SETUP GUIDE\n\n` +
-        `METHOD 1 - Quick Fix (Recommended):\n` +
-        `1. Look at the address bar (where it says localhost:8080)\n` +
-        `2. Click the 🔒 lock icon or 🎥 camera icon\n` +
-        `3. Find "Camera" and select "Allow"\n` +
-        `4. Click "START CAMERA" button again\n\n` +
-        `METHOD 2 - Chrome Settings:\n` +
-        `1. Copy this: chrome://settings/content/camera\n` +
-        `2. Paste it in a new tab and press Enter\n` +
-        `3. Under "Allowed to use your camera"\n` +
-        `4. Click "Add" and enter: http://localhost:8080\n` +
-        `5. Refresh this page (F5)\n\n` +
-        `METHOD 3 - Reset Permissions:\n` +
-        `1. Go to: chrome://settings/content/siteDetails?site=http%3A%2F%2Flocalhost%3A8080\n` +
-        `2. Find "Camera" permission\n` +
-        `3. Set it to "Allow"\n` +
-        `4. Refresh the page\n\n` +
-        `STILL NOT WORKING?\n` +
-        `• Make sure your camera is connected\n` +
-        `• Close other apps using the camera (Zoom, Teams, etc.)\n` +
-        `• Try a different browser (Firefox, Edge)\n` +
-        `• Restart your browser\n\n` +
-        `NO CAMERA? NO PROBLEM!\n` +
-        `You can still enjoy the app!\n` +
-        `• Click technique cards on the left\n` +
-        `• Use keyboard shortcuts: 1-5\n` +
-        `• Press 'A' for Auto-Cast Mode\n` +
-        `• Press 'R' for Random Technique`;
+    const currentURL = window.location.href;
+    const isHTTPS = currentURL.startsWith('https://');
+    const isLocalhost = currentURL.includes('localhost') || currentURL.includes('127.0.0.1');
+    
+    let helpText = `🎥 CAMERA SETUP GUIDE\n\n`;
+    
+    helpText += `📍 CURRENT LOCATION:\n${currentURL}\n`;
+    helpText += `🔒 Protocol: ${isHTTPS ? 'HTTPS ✅' : 'HTTP ⚠️'}\n`;
+    helpText += `💻 Location: ${isLocalhost ? 'Localhost' : 'Remote'}\n\n`;
+    
+    helpText += `METHOD 1 - Quick Fix (Recommended):\n`;
+    helpText += `1. Look at the address bar\n`;
+    helpText += `2. Click the 🔒 lock icon or 🎥 camera icon\n`;
+    helpText += `3. Find "Camera" and select "Allow"\n`;
+    helpText += `4. Click "START CAMERA" button again\n\n`;
+    
+    helpText += `METHOD 2 - Browser Settings:\n`;
+    helpText += `Chrome: chrome://settings/content/camera\n`;
+    helpText += `Edge: edge://settings/content/camera\n`;
+    helpText += `Firefox: about:preferences#privacy\n`;
+    helpText += `Add this site to "Allowed" list\n\n`;
+    
+    if (!isHTTPS && !isLocalhost) {
+        helpText += `⚠️ SECURITY WARNING:\n`;
+        helpText += `You're using HTTP (not HTTPS).\n`;
+        helpText += `Modern browsers may block camera on HTTP.\n`;
+        helpText += `GitHub Pages should use HTTPS automatically.\n\n`;
+    }
+    
+    helpText += `TROUBLESHOOTING:\n`;
+    helpText += `• Make sure your camera is connected\n`;
+    helpText += `• Close other apps using camera (Zoom, Teams)\n`;
+    helpText += `• Try a different browser\n`;
+    helpText += `• Check browser console (F12) for errors\n`;
+    helpText += `• Double-click header to see diagnostics\n\n`;
+    
+    helpText += `NO CAMERA? NO PROBLEM!\n`;
+    helpText += `You can still enjoy the app!\n`;
+    helpText += `• Click technique cards on the left\n`;
+    helpText += `• Use keyboard shortcuts: 1-5\n`;
+    helpText += `• Press 'A' for Auto-Cast Mode\n`;
+    helpText += `• Press 'R' for Random Technique`;
     
     showCameraErrorModal(helpText);
+}
+
+function showDiagnostics() {
+    const diagnostics = `🔍 SYSTEM DIAGNOSTICS\n\n` +
+        `URL: ${window.location.href}\n` +
+        `Protocol: ${window.location.protocol}\n` +
+        `Host: ${window.location.host}\n\n` +
+        `BROWSER:\n` +
+        `User Agent: ${navigator.userAgent.substring(0, 80)}...\n` +
+        `Language: ${navigator.language}\n` +
+        `Online: ${navigator.onLine}\n\n` +
+        `CAMERA API:\n` +
+        `MediaDevices: ${!!navigator.mediaDevices ? '✅' : '❌'}\n` +
+        `getUserMedia: ${!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ? '✅' : '❌'}\n\n` +
+        `LIBRARIES:\n` +
+        `THREE.js: ${typeof THREE !== 'undefined' ? '✅' : '❌'}\n` +
+        `MediaPipe Hands: ${typeof Hands !== 'undefined' ? '✅' : '❌'}\n` +
+        `MediaPipe Camera: ${typeof Camera !== 'undefined' ? '✅' : '❌'}\n` +
+        `MediaPipe Drawing: ${typeof drawConnectors !== 'undefined' ? '✅' : '❌'}\n` +
+        `GSAP: ${typeof gsap !== 'undefined' ? '✅' : '❌'}\n` +
+        `Anime.js: ${typeof anime !== 'undefined' ? '✅' : '❌'}\n\n` +
+        `CAMERA STATE:\n` +
+        `Stream Active: ${state.cameraStream ? '✅ Yes' : '❌ No'}\n` +
+        `Hands Detector: ${state.handsDetector ? '✅ Initialized' : '❌ Not initialized'}\n` +
+        `Video Element Ready: ${document.getElementById('camera-feed').readyState}\n\n` +
+        `💡 TIP: Open browser console (F12) for detailed logs`;
+    
+    showCameraErrorModal(diagnostics);
 }
 
 async function toggleCamera() {
     const btn = document.getElementById('start-camera');
     const video = document.getElementById('camera-feed');
+    const btnText = btn.querySelector('.btn-text');
 
+    console.log('=== TOGGLE CAMERA CALLED ===');
+    console.log('Current stream:', state.cameraStream);
+    console.log('Video element:', video);
+    console.log('Video readyState:', video.readyState);
+
+    // If camera is already running, stop it
     if (state.cameraStream) {
-        // Stop camera
-        state.cameraStream.getTracks().forEach(track => track.stop());
+        console.log('Stopping camera...');
+        state.cameraStream.getTracks().forEach(track => {
+            console.log('Stopping track:', track.label);
+            track.stop();
+        });
         state.cameraStream = null;
-        btn.querySelector('.btn-text').textContent = 'START CAMERA';
+        video.srcObject = null;
+        btnText.textContent = 'START CAMERA';
         btn.classList.remove('active');
+        updateGestureIndicator('CAMERA STOPPED');
+        console.log('Camera stopped successfully');
         return;
     }
 
     // Check if getUserMedia is available
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('getUserMedia not supported');
         showCameraErrorModal('Your browser does not support camera access. Please use Chrome, Edge, or Firefox.');
         return;
     }
 
+    console.log('Browser supports getUserMedia ✅');
+
     try {
-        btn.querySelector('.btn-text').textContent = 'REQUESTING...';
+        btnText.textContent = 'REQUESTING...';
         btn.disabled = true;
         
-        state.cameraStream = await navigator.mediaDevices.getUserMedia({
+        console.log('Requesting camera access...');
+        
+        // Request camera - EXACTLY like the working test file
+        const stream = await navigator.mediaDevices.getUserMedia({
             video: { 
                 width: { ideal: 640 },
                 height: { ideal: 480 },
@@ -698,39 +856,87 @@ async function toggleCamera() {
             }
         });
         
-        video.srcObject = state.cameraStream;
-        btn.querySelector('.btn-text').textContent = 'STOP CAMERA';
+        console.log('✅ Camera stream obtained!');
+        console.log('Stream ID:', stream.id);
+        console.log('Video tracks:', stream.getVideoTracks().map(t => t.label));
+        
+        // Store the stream
+        state.cameraStream = stream;
+        
+        // Set the stream to video element - SIMPLE AND DIRECT
+        video.srcObject = stream;
+        
+        console.log('Stream assigned to video element');
+        console.log('Video srcObject:', video.srcObject);
+        
+        // Handle video events
+        video.onloadedmetadata = () => {
+            console.log('✅ Video metadata loaded');
+            console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight);
+        };
+        
+        video.oncanplay = () => {
+            console.log('✅ Video can play');
+        };
+        
+        video.onplaying = () => {
+            console.log('✅ Video is now playing');
+        };
+        
+        video.onerror = (e) => {
+            console.error('❌ Video error:', e);
+        };
+        
+        // Try to play the video
+        try {
+            await video.play();
+            console.log('✅ Video.play() succeeded');
+        } catch (playError) {
+            console.warn('Video.play() failed, but video might still work:', playError);
+            // Video might still work due to autoplay attribute
+        }
+        
+        // Update UI
+        btnText.textContent = 'STOP CAMERA';
         btn.classList.add('active');
         btn.disabled = false;
-        
         updateGestureIndicator('CAMERA ACTIVE');
-
-        // Initialize MediaPipe Hands
-        setTimeout(() => initHandTracking(), 500);
+        
+        console.log('Camera started successfully!');
+        
+        // Initialize hand tracking after a delay
+        setTimeout(() => {
+            console.log('Attempting to initialize hand tracking...');
+            try {
+                initHandTracking();
+            } catch (error) {
+                console.warn('Hand tracking failed, but camera still works:', error);
+                updateGestureIndicator('CAMERA ONLY (No Gestures)');
+            }
+        }, 1500);
         
     } catch (error) {
-        console.error('Camera access error:', error);
-        btn.querySelector('.btn-text').textContent = 'START CAMERA';
+        console.error('❌ Camera access error:', error);
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        
+        btnText.textContent = 'START CAMERA';
         btn.disabled = false;
         
-        let errorMessage = 'Camera access denied. ';
+        let errorMessage = 'Camera access failed. ';
         
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-            errorMessage += 'You blocked camera access.\n\n';
-            errorMessage += '🔧 TO FIX IN CHROME:\n';
+            errorMessage += 'Camera permission was denied.\n\n';
+            errorMessage += '🔧 TO FIX:\n';
             errorMessage += '1. Click the 🔒 or 🎥 icon in the address bar\n';
-            errorMessage += '2. Change Camera permission to "Allow"\n';
-            errorMessage += '3. Refresh the page (F5)\n\n';
-            errorMessage += 'OR:\n';
-            errorMessage += '1. Go to chrome://settings/content/camera\n';
-            errorMessage += '2. Add http://localhost:8080 to "Allowed to use your camera"\n';
-            errorMessage += '3. Refresh the page';
-        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
-            errorMessage += 'No camera found. Please connect a camera and try again.';
-        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
-            errorMessage += 'Camera is already in use by another application. Close other apps using the camera and try again.';
+            errorMessage += '2. Change Camera to "Allow"\n';
+            errorMessage += '3. Refresh the page (F5)\n';
+        } else if (error.name === 'NotFoundError') {
+            errorMessage += 'No camera found. Connect a camera and try again.';
+        } else if (error.name === 'NotReadableError') {
+            errorMessage += 'Camera is in use by another app. Close other apps and try again.';
         } else {
-            errorMessage += error.message || 'Unknown error occurred.';
+            errorMessage += error.message || 'Unknown error.';
         }
         
         showCameraErrorModal(errorMessage);
@@ -810,18 +1016,33 @@ function initHandTracking() {
 
     // Check if MediaPipe is loaded
     if (typeof Hands === 'undefined') {
-        console.error('MediaPipe Hands not loaded');
-        updateGestureIndicator('MEDIAPIPE ERROR');
+        console.warn('⚠️ MediaPipe Hands not loaded, running in camera-only mode');
+        console.log('Camera feed will work, but gesture detection is disabled');
+        updateGestureIndicator('CAMERA ONLY - NO GESTURES');
+        // Still show camera feed, just no gesture detection
+        return;
+    }
+
+    console.log('Initializing MediaPipe Hands...');
+    
+    // Verify video is ready
+    if (video.readyState < 2) {
+        console.warn('Video not ready yet, waiting...');
+        setTimeout(initHandTracking, 500);
         return;
     }
 
     try {
+        console.log('Creating Hands instance...');
         const hands = new Hands({
             locateFile: (file) => {
-                return `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`;
+                const url = `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/${file}`;
+                console.log('Loading MediaPipe file:', url);
+                return url;
             }
         });
 
+        console.log('Setting hands options...');
         hands.setOptions({
             maxNumHands: 2,
             modelComplexity: 1,
@@ -829,24 +1050,34 @@ function initHandTracking() {
             minTrackingConfidence: 0.5
         });
 
+        console.log('Setting up results handler...');
         hands.onResults((results) => {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Ensure canvas matches video dimensions
+            if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+            
+            ctx.save();
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
                 // Draw hand landmarks
                 for (const landmarks of results.multiHandLandmarks) {
                     if (typeof drawConnectors !== 'undefined' && typeof HAND_CONNECTIONS !== 'undefined') {
-                        drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
-                            color: '#00ffff',
-                            lineWidth: 2
-                        });
-                        drawLandmarks(ctx, landmarks, {
-                            color: '#00ffff',
-                            lineWidth: 1,
-                            radius: 3
-                        });
+                        try {
+                            drawConnectors(ctx, landmarks, HAND_CONNECTIONS, {
+                                color: '#00ffff',
+                                lineWidth: 2
+                            });
+                            drawLandmarks(ctx, landmarks, {
+                                color: '#00ffff',
+                                lineWidth: 1,
+                                radius: 3
+                            });
+                        } catch (drawError) {
+                            console.warn('Drawing error:', drawError);
+                        }
                     } else {
                         // Fallback: draw simple dots
                         ctx.fillStyle = '#00ffff';
@@ -859,36 +1090,73 @@ function initHandTracking() {
                 }
 
                 // Detect gestures
-                detectGesture(results);
+                try {
+                    detectGesture(results);
+                } catch (gestureError) {
+                    console.warn('Gesture detection error:', gestureError);
+                }
             } else {
                 updateGestureIndicator('DETECTING...');
             }
+            
+            ctx.restore();
         });
 
-        // Alternative: use requestAnimationFrame instead of Camera class
-        let isProcessing = false;
-        async function processFrame() {
-            if (!isProcessing && video.readyState === video.HAVE_ENOUGH_DATA) {
-                isProcessing = true;
-                await hands.send({ image: video });
-                isProcessing = false;
+        console.log('Starting frame processing...');
+        // Use requestAnimationFrame for smooth frame processing
+        let frameCount = 0;
+        let lastProcessTime = 0;
+        const minFrameInterval = 1000 / 30; // Limit to 30 FPS
+        
+        async function processFrame(timestamp) {
+            // Only process if camera is still active
+            if (!state.cameraStream) {
+                console.log('Camera stream stopped, ending frame processing');
+                return;
             }
-            if (state.cameraStream) {
-                requestAnimationFrame(processFrame);
+            
+            // Throttle frame processing
+            if (timestamp - lastProcessTime >= minFrameInterval) {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    try {
+                        await hands.send({ image: video });
+                        frameCount++;
+                        if (frameCount === 1) {
+                            console.log('✅ First frame processed successfully');
+                        } else if (frameCount % 100 === 0) {
+                            console.log(`✅ Processed ${frameCount} frames`);
+                        }
+                        lastProcessTime = timestamp;
+                    } catch (sendError) {
+                        console.error('Frame processing error:', sendError);
+                    }
+                }
             }
+            
+            requestAnimationFrame(processFrame);
         }
-        processFrame();
+        
+        requestAnimationFrame(processFrame);
 
         state.handsDetector = hands;
-        console.log('Hand tracking initialized successfully');
+        console.log('✅ Hand tracking initialized successfully');
+        updateGestureIndicator('GESTURE DETECTION ACTIVE');
     } catch (error) {
-        console.error('Error initializing hand tracking:', error);
-        updateGestureIndicator('INIT ERROR');
+        console.error('❌ Error initializing hand tracking:', error);
+        console.error('Error stack:', error.stack);
+        updateGestureIndicator('CAMERA ONLY - GESTURE ERROR');
+        // Don't throw - camera should still work
     }
 }
 
 function detectGesture(results) {
     if (state.isProcessingGesture) return;
+    
+    // Validate results
+    if (!results || !results.multiHandLandmarks || !results.multiHandedness) {
+        updateGestureIndicator('DETECTING...');
+        return;
+    }
 
     const handCount = results.multiHandLandmarks.length;
     const handedness = results.multiHandedness;
@@ -905,7 +1173,7 @@ function detectGesture(results) {
             );
 
             if (distance < 0.15) {
-                updateGestureIndicator('HOLLOW PURPLE DETECTED!');
+                updateGestureIndicator('HOLLOW PURPLE DETECTED! 🟣');
                 triggerTechniqueFromGesture('purple');
                 return;
             }
@@ -915,7 +1183,7 @@ function detectGesture(results) {
             const rightWrist = rightHand[0];
             
             if (leftWrist.y < 0.4 && rightWrist.y < 0.4) {
-                updateGestureIndicator('INFINITY DETECTED!');
+                updateGestureIndicator('INFINITY DETECTED! ∞');
                 triggerTechniqueFromGesture('infinity');
                 return;
             }
@@ -923,10 +1191,13 @@ function detectGesture(results) {
             // Check for hands wide apart (Domain Expansion)
             const wristDistance = calculateDistance(leftWrist, rightWrist);
             if (wristDistance > 0.7 && leftWrist.y < 0.5 && rightWrist.y < 0.5) {
-                updateGestureIndicator('DOMAIN EXPANSION DETECTED!');
+                updateGestureIndicator('DOMAIN EXPANSION DETECTED! 🌀');
                 triggerTechniqueFromGesture('domain');
                 return;
             }
+            
+            // Show that both hands are detected but no gesture matched
+            updateGestureIndicator('2 HANDS DETECTED - Move for gesture');
         }
     } else if (handCount === 1) {
         const hand = results.multiHandLandmarks[0];
@@ -937,17 +1208,20 @@ function detectGesture(results) {
         // Check if hand is pointing forward
         if (indexTip.z < wrist.z - 0.1) {
             if (handType === 'Left') {
-                updateGestureIndicator('CURSED BLUE DETECTED!');
+                updateGestureIndicator('CURSED BLUE DETECTED! 🔵');
                 triggerTechniqueFromGesture('blue');
             } else {
-                updateGestureIndicator('CURSED RED DETECTED!');
+                updateGestureIndicator('CURSED RED DETECTED! 🔴');
                 triggerTechniqueFromGesture('red');
             }
             return;
         }
+        
+        // Show that one hand is detected
+        updateGestureIndicator(`${handType.toUpperCase()} HAND - Point forward`);
+    } else {
+        updateGestureIndicator('SHOW YOUR HANDS');
     }
-
-    updateGestureIndicator('READY FOR INPUT');
 }
 
 function findHand(results, type) {
